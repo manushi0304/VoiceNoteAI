@@ -18,11 +18,13 @@ asyncpg
 # ML / NLP
 torch==2.1.1
 transformers==4.35.2
-faster-whisper==0.10.0
+faster-whisper==1.0.3
+av>=12.1.0,<13.0.0
 spacy==3.7.2
 dateparser==1.2.0
 langdetect==1.0.9
 argostranslate==1.9.1
+
 
 # Queue / Cache
 celery==5.3.4
