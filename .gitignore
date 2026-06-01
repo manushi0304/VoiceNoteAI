@@ -1,0 +1,85 @@
+# ==========================================
+# 🐍 Python Bytecode & Environments
+# ==========================================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# ==========================================
+# 🔑 Security & Credentials (MUST NOT be committed)
+# ==========================================
+.env
+*.env
+.env.local
+.env.*.local
+*.private
+*.key
+*.pem
+
+# ==========================================
+# 🧠 Machine Learning & Large Model Weights
+# ==========================================
+# Exclude model binary files exceeding 100MB (prevents GitHub push rejections)
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.onnx
+*.pkl
+*.joblib
+
+# Ignore the trained local models directory (keep code, configurations, & training scripts tracked)
+backend/models/text_classifier/
+ml-training/models/
+**/checkpoint-*/
+
+# ==========================================
+# 🎙️ Media & Temporary Files (Audio/Logs)
+# ==========================================
+*.wav
+*.mp3
+*.ogg
+*.flac
+*.m4a
+*.tmp
+*.log
+logs/
+temp/
+tmp/
+
+# ==========================================
+# 🧪 Testing & Coverage
+# ==========================================
+.pytest_cache/
+.tox/
+.nosexy/
+.coverage
+htmlcov/
+.coverage.*
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# ==========================================
+# 💻 IDE & OS-specific files
+# ==========================================
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini

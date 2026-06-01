@@ -1,0 +1,11 @@
+model_name: distilbert-base-uncased
+num_labels: 3
+max_length: 128
+batch_size: 16
+epochs: 4
+learning_rate: 2e-5
+
+train_file: ml-training/data/train.csv
+val_file: ml-training/data/val.csv
+
+output_dir: models/text_classifier
