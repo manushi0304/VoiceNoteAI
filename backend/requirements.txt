@@ -21,7 +21,9 @@ asyncpg
 torch==2.1.1
 transformers==4.35.2
 faster-whisper==1.0.3
+openai-whisper
 av>=12.1.0,<13.0.0
+
 spacy==3.7.2
 dateparser==1.2.0
 langdetect==1.0.9
