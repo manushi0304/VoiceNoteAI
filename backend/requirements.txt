@@ -23,7 +23,8 @@ av>=12.1.0,<13.0.0
 spacy==3.7.2
 dateparser==1.2.0
 langdetect==1.0.9
-argostranslate==1.9.1
+argostranslate>=1.11.0
+
 
 
 # Queue / Cache
