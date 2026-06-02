@@ -8,10 +8,19 @@ class TextClassifierService:
     def __init__(self):
         print("✅ TextClassifierService loaded (model + tokenizer)")
 
-        MODEL_PATH = os.path.join(
+        # Try the local backend/models path first (perfect for Render and local)
+        MODEL_PATH = os.path.abspath(os.path.join(
             os.path.dirname(__file__),
-            "../../../ml-training/models/text_classifier"
-        )
+            "../../models/text_classifier"
+        ))
+
+        # Fallback to the sibling ml-training path if needed
+        if not os.path.exists(MODEL_PATH):
+            MODEL_PATH = os.path.abspath(os.path.join(
+                os.path.dirname(__file__),
+                "../../../ml-training/models/text_classifier"
+            ))
+
 
         self.tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
         self.model = AutoModelForSequenceClassification.from_pretrained(MODEL_PATH)
