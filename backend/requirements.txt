@@ -14,7 +14,9 @@ pgvector==0.2.4
 # Auth
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
+email-validator>=2.0.0
 asyncpg
+
 # ML / NLP
 torch==2.1.1
 transformers==4.35.2
