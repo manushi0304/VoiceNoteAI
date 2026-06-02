@@ -6,7 +6,8 @@ from streamlit_mic_recorder import mic_recorder
 
 from utils.layout import load_styles, page_header, require_auth, render_sidebar
 
-API_BASE = "http://127.0.0.1:8000"
+from utils.api import API_BASE
+
 
 st.set_page_config(page_title="Voice AI · VoiceNote AI", page_icon="🎤", layout="wide")
 load_styles()
@@ -71,9 +72,10 @@ if audio:
 
     if response.status_code == 200:
         data = response.json()
-        item_type = data.get("type", "—").title()
+        item_type = data.get("final_type", "—").title()
         conf      = float(data.get("confidence", 0))
         conf_pct  = f"{conf * 100:.0f}%"
+
 
         st.success("Done — item created from your voice.")
         st.markdown('<div style="height:0.25rem;"></div>', unsafe_allow_html=True)
