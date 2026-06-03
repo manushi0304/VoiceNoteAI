@@ -36,6 +36,8 @@ argostranslate>=1.11.0
 # Queue / Cache
 celery==5.3.4
 redis==5.0.1
+apscheduler
+
 
 # Utils
 pydantic==2.5.0
