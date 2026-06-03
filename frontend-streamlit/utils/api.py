@@ -1,7 +1,9 @@
 import requests
 import streamlit as st
+import os
 
-API_BASE = "http://127.0.0.1:8000"
+# Dynamic API selection: loads from environment variable (e.g., Streamlit Secrets) or falls back to localhost for local dev.
+API_BASE = os.getenv("API_BASE", "http://127.0.0.1:8000")
 
 
 def auth_headers():
