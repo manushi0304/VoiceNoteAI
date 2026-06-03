@@ -1,7 +1,8 @@
 import requests
 import streamlit as st
 
-BASE_URL = "http://127.0.0.1:8000"
+from utils.api import API_BASE as BASE_URL
+
 
 
 def login_user(email, password):

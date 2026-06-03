@@ -7,7 +7,7 @@ from components.reminder_alerts import (
     render_reminder_listener,
     render_reminder_sidebar_controls,
 )
-from utils.api import get_notes, get_reminders, get_todos
+from utils.api import get_notes, get_reminders, get_todos, API_BASE
 
 CSS_PATH = Path(__file__).resolve().parent.parent / "styles.css"
 
@@ -51,6 +51,28 @@ def render_sidebar():
             """,
             unsafe_allow_html=True,
         )
+
+        # Display active API status
+        is_local = "127.0.0.1" in API_BASE or "localhost" in API_BASE
+        badge_color = "#f0b429" if is_local else "#2dd4a0"
+        badge_bg = "rgba(240, 180, 41, 0.1)" if is_local else "rgba(45, 212, 160, 0.1)"
+        badge_text = "Local Dev" if is_local else "Production"
+        st.markdown(
+            f"""
+            <div style="margin: -0.5rem 0 1.25rem; padding: 0.35rem 0.55rem; background: rgba(255,255,255,0.03); 
+                        border: 1px solid rgba(255,255,255,0.07); border-radius: 6px; display: flex; 
+                        align-items: center; justify-content: space-between; font-size: 0.68rem;">
+                <span style="color: #64748b; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px;" title="{API_BASE}">
+                    {API_BASE}
+                </span>
+                <span style="color: {badge_color}; font-weight: 600; text-transform: uppercase; font-size: 0.58rem; padding: 0.1rem 0.35rem; background: {badge_bg}; border-radius: 4px; white-space: nowrap;">
+                    {badge_text}
+                </span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
 
         if st.session_state.get("authenticated"):
             notes     = get_notes()
