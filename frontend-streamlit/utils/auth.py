@@ -20,14 +20,18 @@ def login_user(email, password):
             token = response.json()["access_token"]
             st.session_state["token"] = token
             st.session_state["authenticated"] = True
-            return True
+            return True, "Success"
         else:
-            print("LOGIN ERROR:", response.text)
-            return False
+            try:
+                detail = response.json().get("detail", "Login failed")
+                if isinstance(detail, list):
+                    detail = "; ".join(str(item) for item in detail)
+            except Exception:
+                detail = response.text or "Login failed"
+            return False, detail
 
     except Exception as e:
-        print("Login Exception:", e)
-        return False
+        return False, f"Connection error: {str(e)}"
 
 
 def register_user(email, password, full_name):
@@ -41,8 +45,16 @@ def register_user(email, password, full_name):
             }
         )
 
-        return response.status_code == 200
+        if response.status_code == 200:
+            return True, "Success"
+        else:
+            try:
+                detail = response.json().get("detail", "Registration failed")
+                if isinstance(detail, list):
+                    detail = "; ".join(str(item) for item in detail)
+            except Exception:
+                detail = response.text or "Registration failed"
+            return False, detail
 
     except Exception as e:
-        print("Register Exception:", e)
-        return False
+        return False, f"Connection error: {str(e)}"

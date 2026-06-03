@@ -90,11 +90,12 @@ if not st.session_state["authenticated"]:
                     "Sign in", use_container_width=True, type="primary"
                 )
             if submitted:
-                if login_user(email, password):
+                success, msg = login_user(email, password)
+                if success:
                     ensure_reminder_socket()
                     st.rerun()
                 else:
-                    st.error("Invalid credentials. Is the API running on port 8000?")
+                    st.error(f"Sign in failed: {msg}")
 
         with tab_signup:
             with st.form("signup_form"):
@@ -103,10 +104,12 @@ if not st.session_state["authenticated"]:
                 reg_password = st.text_input("Password", type="password", key="reg_password", placeholder="••••••••")
                 reg_submit   = st.form_submit_button("Create account", use_container_width=True)
             if reg_submit:
-                if register_user(reg_email, reg_password, reg_name):
+                success, msg = register_user(reg_email, reg_password, reg_name)
+                if success:
                     st.success("Account created — sign in with your email.")
                 else:
-                    st.error("Registration failed. That email may already be in use.")
+                    st.error(f"Registration failed: {msg}")
+
 
 # ── Dashboard ────────────────────────────────────────────────────────────────
 else:
