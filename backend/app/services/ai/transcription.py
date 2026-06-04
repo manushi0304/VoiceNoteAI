@@ -1,5 +1,5 @@
 import os
-import whisper
+from faster_whisper import WhisperModel
 
 # Only append local dev ffmpeg path on Windows
 if os.name == 'nt':
@@ -14,8 +14,8 @@ def get_model():
         # On Render, force "tiny" model to keep memory usage under the 512MB limit
         if os.getenv("RENDER") == "true":
             model_size = "tiny"
-        print(f"📥 Loading Whisper model '{model_size}'...")
-        _model = whisper.load_model(model_size)
+        print(f"📥 Loading Whisper model '{model_size}' via faster-whisper...")
+        _model = WhisperModel(model_size, device="cpu", compute_type="int8")
         print("✅ Whisper model loaded successfully!")
     return _model
 
@@ -24,10 +24,23 @@ class TranscriptionService:
     @staticmethod
     def transcribe(audio_path: str) -> dict:
         model = get_model()
-        result = model.transcribe(audio_path)
+        segments, info = model.transcribe(audio_path, beam_size=5)
+        
+        # Convert segments generator to a list of dicts to be JSON serializable
+        segments_list = []
+        full_text = []
+        for segment in segments:
+            segments_list.append({
+                "id": segment.id,
+                "start": segment.start,
+                "end": segment.end,
+                "text": segment.text
+            })
+            full_text.append(segment.text)
+            
         return {
-            "text": result["text"],
-            "language": result["language"],
-            "segments": result["segments"],
+            "text": " ".join(full_text).strip(),
+            "language": info.language,
+            "segments": segments_list,
         }
 
