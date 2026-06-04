@@ -1,7 +1,3 @@
-# backend/app/services/classifier_service.py
-
-import torch
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import os
 
 class TextClassifierService:
@@ -23,6 +19,8 @@ class TextClassifierService:
         weights_file = os.path.join(MODEL_PATH, "model.safetensors")
         
         if os.path.exists(MODEL_PATH) and os.path.exists(weights_file):
+            import torch
+            from transformers import AutoTokenizer, AutoModelForSequenceClassification
             print("✅ Custom TextClassifierService loaded successfully from local weights!")
             self.model_loaded = True
             self.tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
@@ -42,6 +40,7 @@ class TextClassifierService:
                 return "todo", 1.0
             return "note", 1.0
 
+        import torch
         inputs = self.tokenizer(
             text,
             return_tensors="pt",
