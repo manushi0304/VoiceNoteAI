@@ -10,10 +10,11 @@ _model = None
 def get_model():
     global _model
     if _model is None:
-        model_size = os.getenv("WHISPER_MODEL_SIZE", "tiny")
-        # On Render, force "tiny" model to keep memory usage under the 512MB limit
+        # On Render Free Tier, disable Whisper model loading entirely to guarantee no OOM crashes
         if os.getenv("RENDER") == "true":
-            model_size = "tiny"
+            raise RuntimeError("Whisper model loading is disabled on Render to prevent OOM")
+            
+        model_size = os.getenv("WHISPER_MODEL_SIZE", "tiny")
         print(f"📥 Loading Whisper model '{model_size}' via faster-whisper...")
         _model = WhisperModel(model_size, device="cpu", compute_type="int8")
         print("✅ Whisper model loaded successfully!")
