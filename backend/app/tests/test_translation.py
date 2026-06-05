@@ -4,8 +4,8 @@ from app.services.ai.translation import TranslationService
 
 
 def test_translation_service(mocker):
-    # Mock argostranslate module's translate function
-    mock_argos_translate = mocker.patch("app.services.ai.translation.translate.translate")
+    # Mock argostranslate module's translate function directly in the library
+    mock_argos_translate = mocker.patch("argostranslate.translate.translate")
     mock_argos_translate.return_value = "Bonjour le monde"
 
     result = TranslationService.translate("Hello world", "en", "fr")
