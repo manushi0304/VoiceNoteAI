@@ -16,12 +16,14 @@ app = FastAPI(
 async def startup():
     print("🚀 VoiceNote AI backend starting up...")
     start_scheduler()
-    try:
-        from app.services.ai.transcription import get_model
-        # Pre-load Whisper model to avoid 30s request timeouts
-        get_model()
-    except Exception as e:
-        print(f"⚠️ Failed to preload Whisper model on startup: {e}")
+    import os
+    if os.getenv("RENDER") != "true":
+        try:
+            from app.services.ai.transcription import get_model
+            # Pre-load Whisper model to avoid 30s request timeouts in local dev
+            get_model()
+        except Exception as e:
+            print(f"⚠️ Failed to preload Whisper model on startup: {e}")
 
 
 # Middleware
