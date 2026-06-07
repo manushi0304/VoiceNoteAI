@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models.reminder import Reminder
 from app.schemas.reminder import ReminderCreate
@@ -21,12 +22,15 @@ class ReminderService:
             if hasattr(reminder.notification_type, "value")
             else reminder.notification_type,
             "created_at": reminder.created_at.isoformat() if reminder.created_at else None,
+            "todo_id": str(reminder.todo_id) if reminder.todo_id else None,
+            "todo_title": reminder.todo.title if reminder.todo else None,
         }
 
     @staticmethod
     async def list(db: AsyncSession, user_id: str):
         result = await db.execute(
             select(Reminder)
+            .options(selectinload(Reminder.todo))
             .where(Reminder.user_id == user_id)
             .order_by(Reminder.reminder_time.asc())
         )
@@ -52,9 +56,21 @@ class ReminderService:
     async def create(db: AsyncSession, user_id: str, data: ReminderCreate):
         reminder_time = normalize_to_utc(data.reminder_time)
 
+        todo_id = data.todo_id
+        if not todo_id and data.todo_title:
+            from app.services.todo_service import TodoService
+            from app.schemas.todo import TodoCreate
+            todo = await TodoService.create(
+                db,
+                user_id,
+                TodoCreate(title=data.todo_title, priority="MEDIUM")
+            )
+            todo_id = todo.id
+
         reminder = Reminder(
             id=uuid4(),
             user_id=user_id,
+            todo_id=todo_id,
             reminder_time=reminder_time,
             notification_type=data.notification_type,
             is_sent=False,
@@ -63,5 +79,9 @@ class ReminderService:
         db.add(reminder)
         await db.commit()
         await db.refresh(reminder)
+
+        if reminder.todo_id:
+            from app.models.todo import Todo
+            reminder.todo = await db.get(Todo, reminder.todo_id)
 
         return ReminderService._serialize(reminder)

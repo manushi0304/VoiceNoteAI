@@ -113,3 +113,40 @@ async def toggle_todo(
         "id": str(todo.id),
         "status": todo.status.value
     }
+
+
+# =====================================================
+# UPDATE PRIORITY
+# =====================================================
+@router.patch("/{todo_id}/priority")
+async def update_priority(
+    todo_id: str,
+    priority: str,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    from app.models.todo import Priority
+
+    todo = await db.get(Todo, todo_id)
+
+    if not todo:
+        raise HTTPException(
+            status_code=404,
+            detail="Todo not found"
+        )
+
+    try:
+        todo.priority = Priority(priority.upper())
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid priority '{priority}'. Must be one of HIGH, MEDIUM, LOW."
+        )
+
+    await db.commit()
+    await db.refresh(todo)
+
+    return {
+        "id": str(todo.id),
+        "priority": todo.priority.value
+    }

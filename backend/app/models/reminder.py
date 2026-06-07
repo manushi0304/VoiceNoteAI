@@ -45,3 +45,4 @@ class Reminder(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
 
     user = relationship("User", back_populates="reminders")
+    todo = relationship("Todo")

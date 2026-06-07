@@ -17,6 +17,7 @@ from app.core.dependencies import get_current_user
 from app.services.ai.transcription import (
     TranscriptionService
 )
+from app.utils.text_cleaning import clean_voice_text
 
 from app.services.ai.extraction import (
     ExtractionService
@@ -113,7 +114,11 @@ async def voice_create(
         # =====================================================
         lower_text = text.lower()
 
-        if "remind me" in lower_text:
+        if (
+            "remind" in lower_text
+            or "mind me" in lower_text
+            or "reminder" in lower_text
+        ):
 
             label = "reminder"
             confidence = 1.0
@@ -186,8 +191,9 @@ async def voice_create(
         # =====================================================
         if label == "note":
 
+            cleaned_text = clean_voice_text(text, label)
             payload = NoteCreate(
-                content=text,
+                content=cleaned_text,
                 original_language=transcript.get(
                     "language",
                     "en"
@@ -209,8 +215,9 @@ async def voice_create(
         # =====================================================
         elif label == "todo":
 
+            cleaned_text = clean_voice_text(text, label)
             payload = TodoCreate(
-                title=text,
+                title=cleaned_text,
                 priority=entities.get(
                     "priority",
                     "MEDIUM"
@@ -247,9 +254,11 @@ async def voice_create(
                     ),
                 )
 
+            cleaned_text = clean_voice_text(text, label)
             payload = ReminderCreate(
                 reminder_time=reminder_time,
                 notification_type="both",
+                todo_title=cleaned_text,
             )
 
             result = await ReminderService.create(

@@ -15,10 +15,16 @@ class TodoService:
         db: AsyncSession,
         user_id: str
     ):
+        from sqlalchemy import not_
+        from app.models.reminder import Reminder
+
+        # Exclude todos that have reminders associated with them
+        reminder_todo_ids = select(Reminder.todo_id).where(Reminder.todo_id.isnot(None))
 
         result = await db.execute(
             select(Todo).where(
-                Todo.user_id == user_id
+                Todo.user_id == user_id,
+                not_(Todo.id.in_(reminder_todo_ids))
             )
         )
 

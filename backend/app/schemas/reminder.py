@@ -18,6 +18,7 @@ class ReminderCreate(BaseModel):
     reminder_time: datetime
     notification_type: NotificationType = NotificationType.both
     todo_id: Optional[UUID] = None
+    todo_title: Optional[str] = None
 
     @field_validator("reminder_time", mode="before")
     @classmethod
@@ -43,3 +44,5 @@ class ReminderResponse(BaseModel):
     is_sent: bool
     notification_type: str
     created_at: Optional[datetime] = None
+    todo_id: Optional[str] = None
+    todo_title: Optional[str] = None

@@ -9,10 +9,7 @@ _model = None
 def get_model():
     global _model
     if _model is None:
-        # On Render Free Tier, disable Whisper model loading entirely to guarantee no OOM crashes
-        if os.getenv("RENDER") == "true":
-            raise RuntimeError("Whisper model loading is disabled on Render to prevent OOM")
-            
+
         from faster_whisper import WhisperModel
         model_size = os.getenv("WHISPER_MODEL_SIZE", "tiny")
         print(f"📥 Loading Whisper model '{model_size}' via faster-whisper...")

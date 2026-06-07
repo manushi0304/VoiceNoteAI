@@ -118,6 +118,11 @@ async def test_todos_crud(client: AsyncClient):
     assert response.status_code == 200
     assert response.json()["status"] == "COMPLETED"
     
+    # 5.5 Endpoint PATCH /todos/{todo_id}/priority (FastAPI client)
+    response = await client.patch(f"/todos/{created_todo['id']}/priority", params={"priority": "HIGH"}, headers=headers)
+    assert response.status_code == 200
+    assert response.json()["priority"] == "HIGH"
+    
     # 6. Endpoint DELETE /todos/{todo_id} (FastAPI client)
     response = await client.delete(f"/todos/{created_todo['id']}", headers=headers)
     assert response.status_code == 200
@@ -127,33 +132,40 @@ async def test_todos_crud(client: AsyncClient):
 async def test_reminders_crud(client: AsyncClient):
     headers, user_id = await create_test_user()
     
-    # 1. Service Create Reminder (isolated DB session)
+    # 1. Service Create Reminder with todo_title (isolated DB session)
     async with AsyncSessionLocal() as db:
         future_time = datetime.now(timezone.utc) + timedelta(hours=2)
         reminder_payload = ReminderCreate(
             reminder_time=future_time,
-            notification_type="push"
+            notification_type="push",
+            todo_title="Call Mom tomorrow"
         )
         reminder = await ReminderService.create(db, user_id, reminder_payload)
         reminder_id = reminder["id"]
         assert reminder["is_sent"] is False
+        assert reminder["todo_title"] == "Call Mom tomorrow"
+        assert reminder["todo_id"] is not None
     
     # 2. Service List Reminders (isolated DB session)
     async with AsyncSessionLocal() as db:
         reminders = await ReminderService.list(db, user_id)
         assert len(reminders) >= 1
         assert any(r["id"] == reminder_id for r in reminders)
+        assert any(r["todo_title"] == "Call Mom tomorrow" for r in reminders)
     
-    # 3. Endpoint POST /reminders/ (FastAPI client)
+    # 3. Endpoint POST /reminders/ with todo_title (FastAPI client)
     future_time_api = datetime.now(timezone.utc) + timedelta(days=1)
     api_payload = {
         "reminder_time": future_time_api.isoformat(),
-        "notification_type": "push"
+        "notification_type": "push",
+        "todo_title": "Finish presentation"
     }
     response = await client.post("/reminders/", json=api_payload, headers=headers)
     assert response.status_code == 200
     created_reminder = response.json()
     assert created_reminder["notification_type"] == "push"
+    assert created_reminder["todo_title"] == "Finish presentation"
+    assert created_reminder["todo_id"] is not None
     
     # 4. Endpoint GET /reminders/ (FastAPI client)
     response = await client.get("/reminders/", headers=headers)
