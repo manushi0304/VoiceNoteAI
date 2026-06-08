@@ -45,107 +45,128 @@ with st.expander("Tips for best results"):
 
 st.markdown('<div style="height:0.5rem;"></div>', unsafe_allow_html=True)
 
+import hashlib
+import os
+
+# Initialize session state variables if they don't exist
+if "last_processed_audio" not in st.session_state:
+    st.session_state.last_processed_audio = None
+if "last_voice_response" not in st.session_state:
+    st.session_state.last_voice_response = None
+
 audio = mic_recorder(
     start_prompt="⏺  Start recording",
     stop_prompt="⏹  Stop & process",
-    just_once=True,
+    just_once=False,
     use_container_width=True,
 )
+
+if audio:
+    audio_hash = hashlib.md5(audio["bytes"]).hexdigest()
+    if st.session_state.last_processed_audio != audio_hash:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+            tmp.write(audio["bytes"])
+            audio_path = tmp.name
+
+        headers = {"Authorization": f"Bearer {st.session_state['token']}"}
+
+        with st.spinner("Transcribing and classifying…"):
+            try:
+                with open(audio_path, "rb") as f:
+                    response = requests.post(
+                        f"{API_BASE}/voice-create/",
+                        headers=headers,
+                        files={"file": f},
+                    )
+                if response.status_code == 200:
+                    st.session_state.last_processed_audio = audio_hash
+                    st.session_state.last_voice_response = response.json()
+                else:
+                    st.session_state.last_processed_audio = audio_hash
+                    st.session_state.last_voice_response = None
+                    st.error("Voice processing failed. Check the backend logs.")
+                    try:
+                        st.json(response.json())
+                    except Exception:
+                        st.code(response.text)
+            except Exception as e:
+                st.error(f"Failed to connect to backend: {e}")
+            finally:
+                if os.path.exists(audio_path):
+                    os.unlink(audio_path)
 
 if audio:
     st.audio(audio["bytes"], format="audio/wav")
     st.markdown('<div style="height:0.35rem;"></div>', unsafe_allow_html=True)
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
-        tmp.write(audio["bytes"])
-        audio_path = tmp.name
+if st.session_state.last_voice_response:
+    data = st.session_state.last_voice_response
+    item_type = data.get("final_type", "—").title()
+    conf      = float(data.get("confidence", 0))
+    conf_pct  = f"{conf * 100:.0f}%"
 
-    headers = {"Authorization": f"Bearer {st.session_state['token']}"}
+    st.success("Done — item created from your voice.")
+    st.markdown('<div style="height:0.25rem;"></div>', unsafe_allow_html=True)
 
-    with st.spinner("Transcribing and classifying…"):
-        with open(audio_path, "rb") as f:
-            response = requests.post(
-                f"{API_BASE}/voice-create/",
-                headers=headers,
-                files={"file": f},
-            )
-
-    if response.status_code == 200:
-        data = response.json()
-        item_type = data.get("final_type", "—").title()
-        conf      = float(data.get("confidence", 0))
-        conf_pct  = f"{conf * 100:.0f}%"
-
-
-        st.success("Done — item created from your voice.")
-        st.markdown('<div style="height:0.25rem;"></div>', unsafe_allow_html=True)
-
-        # Result summary card
-        c1, c2, c3 = st.columns(3)
-        with c1:
+    # Result summary card
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown(
+            f'<div style="padding:1rem 1.1rem;background:rgba(255,255,255,0.03);'
+            f'border:1px solid rgba(255,255,255,0.08);border-radius:8px;">'
+            f'<div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;'
+            f'letter-spacing:0.1em;color:#64748b;margin-bottom:0.4rem;">Type</div>'
+            f'<div style="font-size:1.15rem;font-weight:600;color:#e8edf5;">{item_type}</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+    with c2:
+        conf_color = "#2dd4a0" if conf >= 0.8 else "#f0b429" if conf >= 0.5 else "#f56565"
+        st.markdown(
+            f'<div style="padding:1rem 1.1rem;background:rgba(255,255,255,0.03);'
+            f'border:1px solid rgba(255,255,255,0.08);border-radius:8px;">'
+            f'<div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;'
+            f'letter-spacing:0.1em;color:#64748b;margin-bottom:0.4rem;">Confidence</div>'
+            f'<div style="font-size:1.15rem;font-weight:600;color:{conf_color};">{conf_pct}</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+    with c3:
+        if data.get("reminder_time"):
+            from utils.datetime_helpers import format_local_display
+            sched = format_local_display(data["reminder_time"])
             st.markdown(
                 f'<div style="padding:1rem 1.1rem;background:rgba(255,255,255,0.03);'
                 f'border:1px solid rgba(255,255,255,0.08);border-radius:8px;">'
                 f'<div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;'
-                f'letter-spacing:0.1em;color:#64748b;margin-bottom:0.4rem;">Type</div>'
-                f'<div style="font-size:1.15rem;font-weight:600;color:#e8edf5;">{item_type}</div>'
+                f'letter-spacing:0.1em;color:#64748b;margin-bottom:0.4rem;">Scheduled</div>'
+                f'<div style="font-size:0.88rem;font-weight:500;color:#e8edf5;">{sched}</div>'
                 f'</div>',
                 unsafe_allow_html=True,
             )
-        with c2:
-            conf_color = "#2dd4a0" if conf >= 0.8 else "#f0b429" if conf >= 0.5 else "#f56565"
+        else:
             st.markdown(
-                f'<div style="padding:1rem 1.1rem;background:rgba(255,255,255,0.03);'
-                f'border:1px solid rgba(255,255,255,0.08);border-radius:8px;">'
-                f'<div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;'
-                f'letter-spacing:0.1em;color:#64748b;margin-bottom:0.4rem;">Confidence</div>'
-                f'<div style="font-size:1.15rem;font-weight:600;color:{conf_color};">{conf_pct}</div>'
-                f'</div>',
+                '<div style="padding:1rem 1.1rem;background:rgba(255,255,255,0.03);'
+                'border:1px solid rgba(255,255,255,0.08);border-radius:8px;'
+                'display:flex;align-items:center;justify-content:center;">',
                 unsafe_allow_html=True,
             )
-        with c3:
-            if data.get("reminder_time"):
-                from utils.datetime_helpers import format_local_display
-                sched = format_local_display(data["reminder_time"])
-                st.markdown(
-                    f'<div style="padding:1rem 1.1rem;background:rgba(255,255,255,0.03);'
-                    f'border:1px solid rgba(255,255,255,0.08);border-radius:8px;">'
-                    f'<div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;'
-                    f'letter-spacing:0.1em;color:#64748b;margin-bottom:0.4rem;">Scheduled</div>'
-                    f'<div style="font-size:0.88rem;font-weight:500;color:#e8edf5;">{sched}</div>'
-                    f'</div>',
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.markdown(
-                    '<div style="padding:1rem 1.1rem;background:rgba(255,255,255,0.03);'
-                    'border:1px solid rgba(255,255,255,0.08);border-radius:8px;'
-                    'display:flex;align-items:center;justify-content:center;">',
-                    unsafe_allow_html=True,
-                )
-                st.page_link("pages/4_Timeline.py", label="View in Timeline →", icon="📅")
-                st.markdown('</div>', unsafe_allow_html=True)
+            st.page_link("pages/4_Timeline.py", label="View in Timeline →", icon="📅")
+            st.markdown('</div>', unsafe_allow_html=True)
 
-        st.markdown('<div style="height:0.5rem;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:0.5rem;"></div>', unsafe_allow_html=True)
 
-        st.markdown(
-            '<div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;'
-            'letter-spacing:0.1em;color:#3d4e68;margin-bottom:0.5rem;">Transcript</div>',
-            unsafe_allow_html=True,
-        )
-        st.info(data.get("transcript", ""))
+    st.markdown(
+        '<div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;'
+        'letter-spacing:0.1em;color:#3d4e68;margin-bottom:0.5rem;">Transcript</div>',
+        unsafe_allow_html=True,
+    )
+    st.info(data.get("transcript", ""))
 
-        st.markdown('<div style="height:0.35rem;"></div>', unsafe_allow_html=True)
-        st.markdown(
-            '<div style="font-size:0.68rem;color:#3d4e68;margin-bottom:0.3rem;'
-            'font-family:monospace;">Confidence</div>',
-            unsafe_allow_html=True,
-        )
-        st.progress(min(conf, 1.0))
-
-    else:
-        st.error("Voice processing failed. Check the backend logs.")
-        try:
-            st.json(response.json())
-        except Exception:
-            st.code(response.text)
+    st.markdown('<div style="height:0.35rem;"></div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div style="font-size:0.68rem;color:#3d4e68;margin-bottom:0.3rem;'
+        'font-family:monospace;">Confidence</div>',
+        unsafe_allow_html=True,
+    )
+    st.progress(min(conf, 1.0))

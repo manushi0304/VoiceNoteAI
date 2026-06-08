@@ -43,8 +43,8 @@ with pref_col:
 notify_type = NOTIFY_OPTIONS[notify_label]
 
 
-def _schedule(iso_time: str, label: str) -> bool:
-    ok, err = create_reminder(iso_time, notification_type=notify_type)
+def _schedule(iso_time: str, label: str, todo_title: str = None) -> bool:
+    ok, err = create_reminder(iso_time, notification_type=notify_type, todo_title=todo_title)
     if ok:
         st.success(f"Scheduled — {label}")
         st.rerun()
@@ -69,6 +69,7 @@ st.markdown('<div style="height:0.25rem;"></div>', unsafe_allow_html=True)
 
 # ── Custom date/time ─────────────────────────────────────────────────────────
 with st.form("new_reminder"):
+    title = st.text_input("Reminder Title (Optional)", placeholder="e.g. Call Mom")
     default_dt = local_now() + timedelta(hours=1)
     col1, col2 = st.columns(2)
     with col1:
@@ -83,7 +84,7 @@ if submitted:
         st.error("Pick a future date and time.")
     else:
         label = format_local_display(to_utc_iso(reminder_local))
-        _schedule(to_utc_iso(reminder_local), label)
+        _schedule(to_utc_iso(reminder_local), label, todo_title=title if title.strip() else None)
 
 # ── List ─────────────────────────────────────────────────────────────────────
 reminders = get_reminders()

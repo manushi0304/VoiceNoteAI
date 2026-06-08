@@ -1,7 +1,7 @@
 import streamlit as st
 
 from components.cards import todo_card
-from utils.api import create_todo, delete_todo, get_todos, toggle_todo
+from utils.api import create_todo, delete_todo, get_todos, toggle_todo, update_todo_priority
 from utils.layout import empty_state, load_styles, page_header, require_auth, render_sidebar
 
 st.set_page_config(page_title="Todos · VoiceNote AI", page_icon="✅", layout="wide")
@@ -12,12 +12,16 @@ require_auth()
 page_header("Todos", "Track tasks and mark them done when finished.", "✅")
 
 with st.form("new_todo", clear_on_submit=True):
-    title = st.text_input("New task", placeholder="What needs to get done?")
+    col_t, col_p = st.columns([3, 1])
+    with col_t:
+        title = st.text_input("New task", placeholder="What needs to get done?")
+    with col_p:
+        priority = st.selectbox("Priority", ["HIGH", "MEDIUM", "LOW"], index=1)
     submitted = st.form_submit_button("Add todo →", type="primary", use_container_width=True)
 
 if submitted:
     if title.strip():
-        if create_todo(title):
+        if create_todo(title, priority):
             st.rerun()
         else:
             st.error("Could not add todo. Check the API.")
@@ -74,5 +78,21 @@ if not filtered:
     else:
         empty_state("✅", "Nothing done yet", "Complete a task to see it here.")
 else:
-    for todo in filtered:
-        todo_card(todo, on_delete=delete_todo, on_toggle=toggle_todo)
+    high_todos = [t for t in filtered if (t.get("priority") or "MEDIUM").upper() == "HIGH"]
+    medium_todos = [t for t in filtered if (t.get("priority") or "MEDIUM").upper() == "MEDIUM"]
+    low_todos = [t for t in filtered if (t.get("priority") or "MEDIUM").upper() == "LOW"]
+
+    if high_todos:
+        st.markdown('<h3 style="font-size:1.1rem;color:#f56565;margin:1rem 0 0.5rem 0;font-weight:600;">🔴 High Priority</h3>', unsafe_allow_html=True)
+        for todo in high_todos:
+            todo_card(todo, on_delete=delete_todo, on_toggle=toggle_todo, on_priority_change=update_todo_priority)
+
+    if medium_todos:
+        st.markdown('<h3 style="font-size:1.1rem;color:#4f8ef7;margin:1rem 0 0.5rem 0;font-weight:600;">🔵 Medium Priority</h3>', unsafe_allow_html=True)
+        for todo in medium_todos:
+            todo_card(todo, on_delete=delete_todo, on_toggle=toggle_todo, on_priority_change=update_todo_priority)
+
+    if low_todos:
+        st.markdown('<h3 style="font-size:1.1rem;color:#64748b;margin:1rem 0 0.5rem 0;font-weight:600;">⚪ Low Priority</h3>', unsafe_allow_html=True)
+        for todo in low_todos:
+            todo_card(todo, on_delete=delete_todo, on_toggle=toggle_todo, on_priority_change=update_todo_priority)

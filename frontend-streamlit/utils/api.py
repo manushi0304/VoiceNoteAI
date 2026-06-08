@@ -73,12 +73,13 @@ def get_todos():
     return []
 
 
-def create_todo(title: str):
+def create_todo(title: str, priority: str = "MEDIUM"):
 
     r = requests.post(
         f"{API_BASE}/todos/",
         json={
-            "title": title
+            "title": title,
+            "priority": priority,
         },
         headers=auth_headers()
     )
@@ -120,13 +121,17 @@ def get_reminders():
 
 
 
-def create_reminder(reminder_time: str, notification_type: str = "both"):
+def create_reminder(reminder_time: str, notification_type: str = "both", todo_title: str = None):
+    payload = {
+        "reminder_time": reminder_time,
+        "notification_type": notification_type,
+    }
+    if todo_title:
+        payload["todo_title"] = todo_title
+
     r = requests.post(
         f"{API_BASE}/reminders/",
-        json={
-            "reminder_time": reminder_time,
-            "notification_type": notification_type,
-        },
+        json=payload,
         headers=auth_headers(),
         timeout=15,
     )
@@ -186,3 +191,12 @@ def get_timeline():
     )
 
     return timeline
+
+
+def update_todo_priority(todo_id: str, priority: str):
+    r = requests.patch(
+        f"{API_BASE}/todos/{todo_id}/priority",
+        params={"priority": priority},
+        headers=auth_headers()
+    )
+    return r.status_code == 200

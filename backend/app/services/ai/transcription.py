@@ -44,6 +44,36 @@ class TranscriptionService:
                 "segments": segments_list,
             }
         except Exception as e:
+            hf_token = os.getenv("HF_API_TOKEN")
+            if hf_token:
+                try:
+                    import httpx
+                    print("🌐 RENDER fallback: Transcribing via Hugging Face API...")
+                    hf_url = "https://api-inference.huggingface.co/models/openai/whisper-large-v3-turbo"
+                    headers = {"Authorization": f"Bearer {hf_token}"}
+                    with open(audio_path, "rb") as f:
+                        audio_data = f.read()
+                    
+                    response = httpx.post(
+                        hf_url,
+                        headers=headers,
+                        content=audio_data,
+                        timeout=30.0
+                    )
+                    if response.status_code == 200:
+                        res_json = response.json()
+                        text_val = res_json.get("text", "").strip()
+                        if text_val:
+                            print(f"✅ Hugging Face transcription successful: '{text_val}'")
+                            return {
+                                "text": text_val,
+                                "language": "en",
+                                "segments": [{"id": 0, "start": 0.0, "end": 0.0, "text": text_val}]
+                            }
+                    print(f"⚠️ Hugging Face API returned status {response.status_code}: {response.text}")
+                except Exception as hf_err:
+                    print(f"⚠️ Hugging Face API call failed: {hf_err}")
+
             print(f"⚠️ Whisper load/transcription failed: {e}. Using high-performance mock fallback!")
             # Fallback mock transcription that matches standard reminder command test cases
             return {
