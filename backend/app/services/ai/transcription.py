@@ -44,6 +44,63 @@ class TranscriptionService:
                 "segments": segments_list,
             }
         except Exception as e:
+            # 1. Groq Cloud ASR Fallback (highly recommended: free tier, extremely fast, stable DNS)
+            groq_key = os.getenv("GROQ_API_KEY")
+            if groq_key:
+                try:
+                    import requests
+                    print("🌐 RENDER fallback: Transcribing via Groq Cloud API...")
+                    url = "https://api.groq.com/openai/v1/audio/transcriptions"
+                    headers = {"Authorization": f"Bearer {groq_key}"}
+                    with open(audio_path, "rb") as f:
+                        files = {
+                            "file": (os.path.basename(audio_path), f, "audio/wav"),
+                            "model": (None, "whisper-large-v3"),
+                        }
+                        response = requests.post(url, headers=headers, files=files, timeout=30.0)
+                    if response.status_code == 200:
+                        res_json = response.json()
+                        text_val = res_json.get("text", "").strip()
+                        if text_val:
+                            print(f"✅ Groq transcription successful: '{text_val}'")
+                            return {
+                                "text": text_val,
+                                "language": "en",
+                                "segments": [{"id": 0, "start": 0.0, "end": 0.0, "text": text_val}]
+                            }
+                    print(f"⚠️ Groq API returned status {response.status_code}: {response.text}")
+                except Exception as groq_err:
+                    print(f"⚠️ Groq API call failed: {groq_err}")
+
+            # 2. OpenAI Whisper API Fallback
+            openai_key = os.getenv("OPENAI_API_KEY")
+            if openai_key:
+                try:
+                    import requests
+                    print("🌐 RENDER fallback: Transcribing via OpenAI Cloud API...")
+                    url = "https://api.openai.com/v1/audio/transcriptions"
+                    headers = {"Authorization": f"Bearer {openai_key}"}
+                    with open(audio_path, "rb") as f:
+                        files = {
+                            "file": (os.path.basename(audio_path), f, "audio/wav"),
+                            "model": (None, "whisper-1"),
+                        }
+                        response = requests.post(url, headers=headers, files=files, timeout=30.0)
+                    if response.status_code == 200:
+                        res_json = response.json()
+                        text_val = res_json.get("text", "").strip()
+                        if text_val:
+                            print(f"✅ OpenAI transcription successful: '{text_val}'")
+                            return {
+                                "text": text_val,
+                                "language": "en",
+                                "segments": [{"id": 0, "start": 0.0, "end": 0.0, "text": text_val}]
+                            }
+                    print(f"⚠️ OpenAI API returned status {response.status_code}: {response.text}")
+                except Exception as oa_err:
+                    print(f"⚠️ OpenAI API call failed: {oa_err}")
+
+            # 3. Hugging Face Inference API Fallback
             hf_token = os.getenv("HF_API_TOKEN")
             if hf_token:
                 try:
