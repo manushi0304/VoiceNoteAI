@@ -47,17 +47,17 @@ class TranscriptionService:
             hf_token = os.getenv("HF_API_TOKEN")
             if hf_token:
                 try:
-                    import httpx
+                    import requests
                     print("🌐 RENDER fallback: Transcribing via Hugging Face API...")
                     hf_url = "https://api-inference.huggingface.co/models/openai/whisper-large-v3-turbo"
                     headers = {"Authorization": f"Bearer {hf_token}"}
                     with open(audio_path, "rb") as f:
                         audio_data = f.read()
                     
-                    response = httpx.post(
+                    response = requests.post(
                         hf_url,
                         headers=headers,
-                        content=audio_data,
+                        data=audio_data,
                         timeout=30.0
                     )
                     if response.status_code == 200:
