@@ -143,6 +143,9 @@ async def voice_create(
 
         elif (
             "buy" in lower_text
+            or "todo" in lower_text
+            or "to do" in lower_text
+            or "to-do" in lower_text
             or "complete" in lower_text
             or "finish" in lower_text
             or "task" in lower_text

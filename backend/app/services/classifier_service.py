@@ -36,7 +36,7 @@ class TextClassifierService:
             lower = text.lower()
             if "remind" in lower or "tomorrow" in lower or "at" in lower or "schedule" in lower:
                 return "reminder", 1.0
-            elif "buy" in lower or "todo" in lower or "task" in lower or "finish" in lower or "complete" in lower:
+            elif "buy" in lower or "todo" in lower or "to do" in lower or "to-do" in lower or "task" in lower or "finish" in lower or "complete" in lower:
                 return "todo", 1.0
             return "note", 1.0
 

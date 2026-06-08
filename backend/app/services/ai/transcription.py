@@ -56,6 +56,7 @@ class TranscriptionService:
                         files = {
                             "file": (os.path.basename(audio_path), f, "audio/wav"),
                             "model": (None, "whisper-large-v3"),
+                            "language": (None, "en"),
                         }
                         response = requests.post(url, headers=headers, files=files, timeout=30.0)
                     if response.status_code == 200:
@@ -84,6 +85,7 @@ class TranscriptionService:
                         files = {
                             "file": (os.path.basename(audio_path), f, "audio/wav"),
                             "model": (None, "whisper-1"),
+                            "language": (None, "en"),
                         }
                         response = requests.post(url, headers=headers, files=files, timeout=30.0)
                     if response.status_code == 200:
